@@ -34,7 +34,10 @@ if dein#check_install()
   call dein#install()
 endif
 
-autocmd vimenter * NERDTree
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+
+
 
 " NERDTress File highlighting
 function! NERDTreeHighlightFile(extension, fg, bg, guifg, guibg)
@@ -93,6 +96,9 @@ let g:airline#extensions#ale#warning_symbol = 'W:'
 
 set number
 syntax on
+
+" ヤンクでクリップボードにコピー
+set clipboard=unnamed,autoselect
 
 let g:clang_c_options = '-std=c11'
 let g:clang_cpp_options = '-std=c++1z -stdlib=libc++ –pedantic-errors'
