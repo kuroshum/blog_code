@@ -86,6 +86,8 @@ def fit(model, dataset, loss_list, optimizer=tf.train.AdamOptimizer(), training=
             # 損失と勾配を計算
             loss, grads = loss_and_grads(model, x, y)
 
+            pdb.set_trace()
+
             # 勾配を更新
             optimizer.apply_gradients(grads)
         else:
@@ -139,7 +141,7 @@ if __name__ == "__main__":
     xData_test = tf.convert_to_tensor(xData_test)
     yData_train = tf.convert_to_tensor(yData_train)
     yData_test = tf.convert_to_tensor(yData_test)
-
+    pdb.set_trace()
     # lossの記録
     train_loss_list = tf.keras.metrics.Mean()
     test_loss_list = tf.keras.metrics.Mean()
@@ -166,7 +168,7 @@ if __name__ == "__main__":
 
         # test_rate回に1回、テスト時の損失を計算
         if ite % test_rate==0:
-            test_loss_mean = fit(classifier_model, dataset_train, train_loss_list)
+            test_loss_mean = fit(classifier_model, dataset_test, test_loss_list)
             print('#{0}, test loss : {1}'.format(ite, test_loss_mean))
         
     #--------------------------------------------------------------------------------
