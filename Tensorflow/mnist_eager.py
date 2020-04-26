@@ -37,6 +37,8 @@ def load_mnist_data():
 class ClassifierModel(tf.keras.Model):
     
     # モデルのレイヤー定義
+    # args : 
+    #   output_dim : 出力結果の次元  
     def __init__(self, output_dim, **kwargs):
         super(ClassifierModel, self).__init__(**kwargs)
         # wx + bを出力
@@ -53,6 +55,10 @@ class ClassifierModel(tf.keras.Model):
 
 #--------------------------------------------------------------------------------
 # クロスエントロピー損失関数
+# args : 
+#   model : 定義したモデル(Classifier model)
+#   x_t : 学習 or テスト データ
+#   y_t : 教師データ
 def cross_entropy_loss(model, x_t, y_t):
     # categorical_crossentropyの入力データはone-hot表現なので
     # y_t, model(x_t)はどちらも(データ数, 10)
@@ -62,6 +68,11 @@ def cross_entropy_loss(model, x_t, y_t):
 
 #--------------------------------------------------------------------------------
 # 1エポックで行う学習(ミニバッチ)
+# args : 
+#   model : 定義したモデル(Classifier model)
+#   dataset : 学習データと教師データをtf.data.Datasetのコレクションに変換したやつ
+#   loss_list : lossを記録する
+#   optimizer : 最適化関数
 def fit(model, dataset, loss_list, optimizer=tf.train.AdamOptimizer(), training=False):
 
     # 損失関数から勾配を計算する
