@@ -1,9 +1,10 @@
 import tensorflow as tf
 import numpy as np
 import pdb
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_openml
-
+from sklearn.metrics import accuracy_score
 #--------------------------------------------------------------------------------
 # mnistデータをロードし、説明変数と目的変数を返す
 def load_mnist_data():
@@ -53,6 +54,33 @@ def linear_regression(x_t, xDim, yDim, reuse=False):
 
 #--------------------------------------------------------------------------------
 
+#--------------------------------------------------------------------------------
+# 線形回帰モデル
+def classifier_model(x_t, xDim, yDim, reuse=False):
+    with tf.variable_scope('classifier_model') as scope:
+        if reuse:
+            scope.reuse_variables()
+        
+        # 重みを初期化
+        w1 = weight_variable('w1', [xDim, 128])
+        # バイアスを初期化
+        b1 = bias_variable('b1', [128])
+
+        # softmax回帰を実行
+        h1 = tf.nn.relu(tf.add(tf.matmul(x_t, w1), b1))
+
+        # 重みを初期化
+        w2 = weight_variable('w2', [128, yDim])
+        # バイアスを初期化
+        b2 = bias_variable('b2', [yDim])
+
+        # softmax回帰を実行
+        y = tf.nn.softmax(tf.add(tf.matmul(h1, w2), b2))
+
+        return y
+
+#--------------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
 
@@ -89,8 +117,8 @@ if __name__ == "__main__":
     # Tensorflowで用いるグラフを定義
 
     # 線形回帰を実行
-    output_train = linear_regression(x_t, xDim, yDim)
-    output_test = linear_regression(x_t, xDim, yDim, reuse=True)
+    output_train = classifier_model(x_t, xDim, yDim)
+    output_test = classifier_model(x_t, xDim, yDim, reuse=True)
 
     # 損失関数(クロスエントロピー)
     loss_square_train = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=y_t, logits=output_train))
@@ -111,18 +139,22 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------------------
     # 学習とテストを実行
 
-    # lossの履歴を保存
+    # lossの履歴を保存するリスト
     loss_train_list = []
     loss_test_list = []
 
+    # accuracyの履歴を保存するリスト
+    accuracy_train_list = []
+    accuracy_test_list = []
+
     # イテレーションの反復回数
-    nIte = 100
+    nIte = 500
 
     # テスト実行の割合(test_rate回につき1回)
     test_rate = 10
 
     # バッチサイズ
-    BATCH_SIZE = 64
+    BATCH_SIZE = 500
 
     # 学習データ・テストデータの数
     num_data_train = xData_train.shape[0]
@@ -143,30 +175,49 @@ if __name__ == "__main__":
             sess.run([training_step], feed_dict=train_dict)
         
         loss_train = sess.run(loss_square_train, feed_dict=train_dict)
-        # lossの履歴を保存
-        loss_train_list.append(loss_train)
 
         output = sess.run(output_train, feed_dict=train_dict)
-        
-        print('#{0}, train loss : {1}'.format(ite, loss_train))
+        accuracy_train = accuracy_score(np.argmax(batch_y,axis=1), np.argmax(output,axis=1))
+
         
         # 反復10回につき一回lossを表示
         if ite % test_rate == 0:
-            pern = np.random.permutation(num_data_test)
-            for i in range(0, num_data_test, BATCH_SIZE):
-                batch_x = xData_test[pern[i:i+BATCH_SIZE]]
-                batch_y = yData_test[pern[i:i+BATCH_SIZE]]
-        
-                test_dict = {x_t: batch_x, y_t: batch_y}
+            test_dict = {x_t: xData_test, y_t: yData_test}
             
             loss_test = sess.run(loss_square_test, feed_dict=test_dict)
+            accuracy_test = accuracy_score(np.argmax(yData_test, axis=1), np.argmax(sess.run(output_test, feed_dict=test_dict), axis=1))
 
+            # lossの履歴を保存
+            loss_train_list.append(loss_train)
             loss_test_list.append(loss_test)
 
+            accuracy_train_list.append(accuracy_train)
+            accuracy_test_list.append(accuracy_test)
+
+
+            print('#{0}, train loss : {1}'.format(ite, loss_train))
             print('#{0}, test loss : {1}'.format(ite, loss_test))
     #--------------------------------------------------------------------------------
 
     #--------------------------------------------------------------------------------
     # 学習とテストのlossの履歴をplot
+
+    fig = plt.figure()
+
+    # Plot lines
+    plt.xlabel('epoch')
+    plt.plot(range(len(loss_train_list)), loss_train_list, label='train_loss')
+    plt.plot(range(len(loss_test_list)), loss_test_list, label='test_loss')
+    plt.legend()
+    plt.show()
+
+    fig = plt.figure()
+
+    # Plot lines
+    plt.xlabel('epoch')
+    plt.plot(range(len(accuracy_train_list)), accuracy_train_list, label='train_accuracy')
+    plt.plot(range(len(accuracy_test_list)), accuracy_test_list, label='test_accuracy')
+    plt.legend()
+    plt.show()
 
     #--------------------------------------------------------------------------------
